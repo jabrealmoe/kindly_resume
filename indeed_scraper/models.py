@@ -10,6 +10,8 @@ class Job:
     summary: str
     link: str
     full_description: Optional[str] = None
+    company_url: Optional[str] = None
+    is_workday: str = "No"
     
     def to_dict(self):
         return {
@@ -19,5 +21,7 @@ class Job:
             "posted": self.posted,
             "summary": self.summary,
             "link": self.link,
-            "full_description": self.full_description
+            "full_description": self.full_description,
+            "company_url": self.company_url,
+            "is_workday": self.is_workday
         }

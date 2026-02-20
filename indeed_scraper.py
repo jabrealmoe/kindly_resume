@@ -1,4 +1,4 @@
-from indeed_scraper.cli import main
+from indeed_scraper.cli import cli
 
 if __name__ == "__main__":
-    main()
+    cli()

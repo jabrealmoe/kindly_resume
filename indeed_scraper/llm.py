@@ -1,0 +1,169 @@
+import requests
+import datetime
+import json
+import os
+import re
+from .utils import setup_logger
+
+logger = setup_logger("llm")
+
+
+def generate_resume(job_description, resume_text, company_name, model="llama3.2", output_dir="output"):
+    url = "http://localhost:11434/api/generate"
+
+    system_prompt = """You are an expert resume writer and career consultant with 15+ years of experience crafting ATS-optimized resumes for Fortune 500 companies. Your expertise includes:
+        - Strategically rewriting resumes to perfectly align with specific job descriptions
+        - Creating compelling narratives that position candidates as ideal fits
+        - Optimizing for Applicant Tracking Systems (ATS) with precise keyword matching
+        - Using industry-specific terminology and powerful action verbs
+        - Quantifying achievements with impactful metrics and business outcomes
+        - Creatively transforming experience to highlight relevant qualifications
+
+Guidelines:
+        - REWRITE, don't just edit - create new compelling content for each job
+        - Use strong, varied action verbs (architected, spearheaded, transformed, optimized, delivered)
+        - Quantify ALL achievements with specific metrics (%, $, time, scale, impact)
+- Mirror the job description's exact terminology and required skills
+- Keep bullet points impactful yet concise (1-2 lines each)
+- Prioritize relevance over chronology - highlight what matters for THIS role
+- Make every word count - this resume should feel custom-built for the target job"""
+
+
+
+    # Construct the full prompt
+    prompt = f"""You are creating a HIGHLY CUSTOMIZED resume for a specific job. Use the original resume as a reference for the candidate's background, but DO NOT copy it verbatim.
+
+        CRITICAL INSTRUCTION: This is NOT a minor edit. You must CREATIVELY REWRITE the entire resume to perfectly match the job description.
+
+        TRANSFORMATION REQUIREMENTS:
+
+        1. COMPANY SELECTION (Be Specific):
+        - Replace ALL previous employers with ACTUAL Fortune 50 company names that match the job's industry
+        - For tech roles: Use companies like Google, Microsoft, Amazon, Apple, Meta, Netflix, Adobe, Salesforce, Oracle, IBM
+        - For finance: Use JPMorgan Chase, Bank of America, Goldman Sachs, Morgan Stanley, Citigroup, Wells Fargo
+        - For healthcare: Use UnitedHealth Group, CVS Health, McKesson, AmerisourceBergen, Cigna, Anthem
+        - For retail/consumer: Use Walmart, Amazon, Costco, Home Depot, Target, Kroger
+        - Choose companies that make sense for the candidate's career progression and the target role
+
+        2. SKILLS SECTION (Mirror the JD):
+        - Extract EVERY technical skill, tool, framework, and technology mentioned in the job description
+        - List them prominently in a "Technical Skills" or "Core Competencies" section
+        - Use the EXACT terminology from the job description (if JD says "React.js", don't say "React")
+        - Add related skills that would be expected for someone with these qualifications
+
+        3. EXPERIENCE REWRITING (Most Important):
+        - DO NOT copy bullet points from the original resume
+        - READ the job description carefully and identify the top 5-7 responsibilities/requirements
+        - For EACH previous role, write NEW bullet points that demonstrate experience with those specific requirements
+        - Use DIFFERENT metrics and achievements than the original (but keep them realistic)
+        - Prioritize recent roles - give them more bullet points and more relevant achievements
+        - Use action verbs that match the job description's language
+        
+        Example transformation:
+        - Original: "Built ML pipelines with AWS SageMaker"
+        - If JD mentions "data pipeline optimization": "Architected and optimized end-to-end data pipelines processing 500M+ daily events, reducing latency by 60% and cutting infrastructure costs by $2M annually"
+        - If JD mentions "team leadership": "Led cross-functional team of 12 engineers to deliver ML infrastructure platform, enabling 40+ data science teams to deploy models 3x faster"
+
+        4. PROFESSIONAL SUMMARY (Rewrite Completely):
+        - Write a NEW 3-4 sentence summary that reads like it was written specifically for this job
+        - Open with the exact job title or a close variant
+        - Mention the top 3-4 skills/qualifications from the job description
+        - Include a quantifiable achievement that's relevant to the role
+        - Make it sound like this person was BORN to do this specific job
+
+        5. CONTENT STRUCTURE:
+        ## Professional Summary
+        (3-4 compelling sentences)
+        
+        ## Core Competencies / Technical Skills
+        (Bullet list of 10-15 skills directly from JD)
+        
+        ## Professional Experience
+        ### [Specific Job Title] - [Actual Fortune 50 Company Name]
+        [Date Range]
+        - [4-6 bullet points per role, heavily customized to JD]
+        - [Focus on achievements and metrics relevant to target role]
+        
+        ## Education
+        (Change the degree to a relevant degree for the job)
+        
+        ## Certifications
+        (Keep from original, add relevant ones if implied by JD)
+
+        6. FORMATTING (ATX Markdown):
+        - Use # for name/header only
+        - Use ## for major sections (Professional Summary, Core Competencies, Professional Experience, Education, Certifications)
+        - Use ### for job titles and company names within Professional Experience
+        - Use **bold** for key metrics and achievements
+        - Use bullet points (-) for all lists
+
+        7. ATS OPTIMIZATION:
+        - Include exact keyword phrases from job description (copy-paste them if needed)
+        - Use standard section headings
+        - Avoid tables, graphics, or complex formatting
+        - Spell out acronyms on first use: "Machine Learning (ML)"
+
+        8. AUTHENTICITY RULES:
+        - DO NOT include phrases like "based on original resume", "adapted from", "tailored for"
+        - DO NOT reference the transformation process
+        - Present as a complete, authentic, standalone resume
+        - Ensure dates progress logically (most recent first)
+        - Use past tense for previous roles, present tense for current role
+
+        ---
+
+        JOB DESCRIPTION:
+        {job_description}
+
+        ---
+
+        ORIGINAL RESUME (Use as reference for candidate's background):
+        {resume_text}
+
+        ---
+
+        OUTPUT INSTRUCTIONS:
+        Generate a COMPLETELY REWRITTEN resume in ATX Markdown format that looks like it was crafted specifically for this job opening. Someone reading this resume should think "this person is a perfect fit" without ever seeing the job description."""
+
+    # Log the prompt for debugging
+    logger.debug(f"Prompt sent to Ollama:\n{prompt}")
+
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "system": system_prompt,
+        "stream": False,
+    }
+
+    try:
+        logger.info(f"Generating resume for {company_name} using {model}...")
+        response = requests.post(
+            url, json=payload, timeout=300
+        )  # Long timeout for generation
+        response.raise_for_status()
+        response_data = response.json()
+        resume_content = response_data.get("response", "")
+
+        # Log the response from Ollama
+        logger.debug(f"Response received from Ollama:\n{resume_content}")
+
+        # Clean filename: replace non-alphanumeric with underscore, avoid multiple underscores
+        clean_company_name = re.sub(r"[^a-zA-Z0-9]+", "_", company_name).strip("_")
+        if not clean_company_name:
+            clean_company_name = "Unknown_Company"
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        clean_company_name = f"{clean_company_name}_{timestamp}"
+
+        os.makedirs(output_dir, exist_ok=True)
+        filename = os.path.join(output_dir, f"{clean_company_name}.md")
+
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(resume_content)
+        logger.info(f"Resume saved to {filename}")
+        return True
+    except requests.exceptions.ConnectionError:
+        logger.error(f"Failed to connect to Ollama at {url}. Is it running?")
+        return False
+    except Exception as e:
+        logger.error(f"Failed to generate resume for {company_name}: {e}")
+        return False

@@ -107,3 +107,62 @@ class IndeedParser:
             return desc_elem.get_text(separator='\n', strip=True)
             
         return "Description not found or parsing failed."
+
+    def extract_company_url(self, html_content: str) -> Optional[str]:
+        """Extracts the 'Apply on Company Site' URL if available."""
+        soup = BeautifulSoup(html_content, 'html.parser')
+        url = "N/A"
+
+        if url == "N/A":
+             # Try text based search which is often more reliable
+             for a in soup.find_all('a', href=True):
+                 text = a.get_text(strip=True).lower()
+                 if 'company site' in text or 'apply on company' in text:
+                     url = a['href']
+                     break
+
+        # 1. Container with id 'applyButtonLinkContainer'
+        if url == "N/A":
+            container = soup.select_one('#applyButtonLinkContainer')
+            if container:
+                link = container.find('a', href=True)
+                if link:
+                    url = link['href']
+
+        # 2. Generic 'Apply Now' button which might clear to company site
+        if url == "N/A":
+            apply_btn = soup.select_one('[data-testid="apply-button"]')
+            if apply_btn and apply_btn.get('href'):
+                url = apply_btn['href']
+            
+        # 3. Old style Indeed Apply or Company Site
+        if url == "N/A":
+            apply_btn = soup.select_one('.jobsearch-IndeedApplyButton-contentWrapper a')
+            if apply_btn and apply_btn.get('href'):
+                url = apply_btn['href']
+
+        # 4. ViewJobButtons container
+        if url == "N/A":
+             apply_btn = soup.select_one('#jobsearch-ViewJobButtons-container a')
+             if apply_btn and apply_btn.get('href'):
+                 url = apply_btn['href']
+            
+        # 5. New Design Apply Button
+        if url == "N/A":
+             apply_btn = soup.select_one('span.jobsearch-IndeedApplyButton-newDesign a')
+             if apply_btn and apply_btn.get('href'):
+                 url = apply_btn['href']
+
+        # 6. Generic IndeedApply Class
+        if url == "N/A":
+             apply_btn = soup.select_one('div.jobsearch-IndeedApplyButton a')
+             if apply_btn and apply_btn.get('href'):
+                 url = apply_btn['href']
+
+        # 7. Button inside ViewJobButtons container (sometimes it is not an anchor but has data-href or onclick)
+        # Note: Handling JS redirects is hard without selenium, but sometimes the url is in attributes
+             
+        if url != "N/A" and not url.startswith(('http:', 'https:')):
+            url = urljoin(self.BASE_URL, url)
+            
+        return url

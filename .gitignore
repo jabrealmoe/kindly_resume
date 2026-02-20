@@ -137,3 +137,4 @@ cython_debug/
 # Project Specific
 # Exclude CSV files as requested
 *.csv
+output/
