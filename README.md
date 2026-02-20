@@ -1,7 +1,5 @@
 # Indeed Job Scraper & Resume AI
 
-![Recruiter Clown](./recruiter_clown.png)
-
 A comprehensive tool for automated job searching and application preparation. This CLI application scrapes job listings from Indeed and uses a local LLM to generate highly customized, ATS-optimized resumes tailored to each job description.
 
 ## Features
