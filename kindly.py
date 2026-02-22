@@ -1,4 +1,4 @@
-from indeed_scraper.cli import cli
+from kindly_scraper.cli import cli
 
 if __name__ == "__main__":
     cli()

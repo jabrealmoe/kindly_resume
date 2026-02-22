@@ -4,19 +4,19 @@ from typing import List
 from .models import Job as ScrapedJob
 from .db_models import Job as DBJob
 from .db import get_db, SessionLocal, engine, Base
-from .parser import IndeedParser
+from .parser import KindlyParser
 from .utils import get_random_headers, random_sleep, request_retry, setup_logger, resolve_redirect
 from .llm import get_ollama_embedding
 
 logger = setup_logger("scraper")
 
-class IndeedScraper:
+class KindlyScraper:
     """Handles fetching pages and orchestrating scraping."""
     
     BASE_URL = "https://www.indeed.com/jobs"
 
     def __init__(self):
-        self.parser = IndeedParser()
+        self.parser = KindlyParser()
         self.session = requests.Session()
         # Visit homepage to set initial cookies
         try:

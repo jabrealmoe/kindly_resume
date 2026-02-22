@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import os
 import re
-from .scraper import IndeedScraper
+from .scraper import KindlyScraper
 from .utils import setup_logger
 from .models import Job
 from .db import SessionLocal, engine, Base
@@ -22,7 +22,7 @@ def clean_sheet_name(name):
 
 @click.group()
 def cli():
-    """Indeed Scraper and Resume Generator CLI"""
+    """Kindly Scraper and Semantic Alignment CLI"""
     # Initialize the database tables if they do not exist
     Base.metadata.create_all(bind=engine)
 
@@ -36,7 +36,7 @@ def scrape(query, city, days, pages, output):
     """Scrapes job listings and saves to a central manifest (Excel)."""
     logger.info(f"Starting scrape: query='{query}', city='{city}', days={days}, pages={pages}")
     
-    scraper = IndeedScraper()
+    scraper = KindlyScraper()
     jobs = scraper.scrape(query=query, city=city, days=days, pages=pages)
     
     if not jobs:

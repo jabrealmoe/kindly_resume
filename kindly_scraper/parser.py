@@ -6,8 +6,8 @@ from .utils import setup_logger
 
 logger = setup_logger("parser")
 
-class IndeedParser:
-    """Parses Indeed job listing HTML."""
+class KindlyParser:
+    """Parses job listing HTML."""
     
     BASE_URL = "https://www.indeed.com"
 

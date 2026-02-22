@@ -1,4 +1,4 @@
-# Indeed Job Scraper & Semantic Resume Aligner
+# Kindly Scraper & Semantic Resume Aligner
 
 ![Recruiter Clown](./recruiter_clown.png)
 
@@ -37,7 +37,7 @@ This tool is designed for **Semantic Alignment**, not fabrication.
 
    ```bash
    git clone <repository-url>
-   cd scrapper-indeed
+   cd scrapper-kindly
    python3 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
@@ -55,7 +55,7 @@ This tool is designed for **Semantic Alignment**, not fabrication.
 Fetches jobs and saves them to the PostgreSQL database and the central `manifest.xlsx`.
 
 ```bash
-python3 indeed_scraper.py scrape --query "Python Developer" --city "Remote" --pages 2
+python3 kindly.py scrape --query "Python Developer" --city "Remote" --pages 2
 ```
 
 ### 2. Semantic Similarity Search
@@ -63,7 +63,7 @@ python3 indeed_scraper.py scrape --query "Python Developer" --city "Remote" --pa
 Find jobs that match the _meaning_ of your query, not just keywords. Uses local vector embeddings.
 
 ```bash
-python3 indeed_scraper.py similar --query "Looking for a backend role with Python and FastAPI" --top 5
+python3 kindly.py similar --query "Looking for a backend role with Python and FastAPI" --top 5
 ```
 
 ### 3. Semantic Resume Alignment
@@ -71,7 +71,7 @@ python3 indeed_scraper.py similar --query "Looking for a backend role with Pytho
 Translate your resume into the specific language of a job description. Aligned resumes are automatically saved to the database.
 
 ```bash
-python3 indeed_scraper.py align --input output/jobs.csv --resume my_resume.txt
+python3 kindly.py align --input output/jobs.csv --resume my_resume.txt
 ```
 
 ### 4. Retrieving Aligned Resumes
@@ -79,7 +79,7 @@ python3 indeed_scraper.py align --input output/jobs.csv --resume my_resume.txt
 Fetch a previously aligned resume from the database by its job ID.
 
 ```bash
-python3 indeed_scraper.py fetch-resume --job-id 42
+python3 kindly.py fetch-resume --job-id 42
 ```
 
 ### 5. Direct Database Querying (CLI)
@@ -88,13 +88,13 @@ Query the job database directly from the CLI without writing SQL.
 
 ```bash
 # List the last 10 jobs found
-python3 indeed_scraper.py list-jobs --limit 10
+python3 kindly.py list-jobs --limit 10
 
 # List jobs by company
-python3 indeed_scraper.py list-jobs --company "Google"
+python3 kindly.py list-jobs --company "Google"
 
 # Show full details (description, link, etc.) for a specific job ID
-python3 indeed_scraper.py describe 42
+python3 kindly.py describe 42
 ```
 
 ## Database Access
@@ -122,7 +122,7 @@ docker exec -it indeed_pg psql -U scraper -d scraper_jobs
 
 ```
 .
-├── indeed_scraper/      # Core logic package
+├── kindly_scraper/      # Core logic package
 │   ├── db/              # Database connection and setup
 │   ├── cli.py           # CLI entry point
 │   ├── scraper.py       # Scraper orchestration
@@ -131,7 +131,7 @@ docker exec -it indeed_pg psql -U scraper -d scraper_jobs
 │   ├── db_models.py     # SQLAlchemy models
 │   └── models.py        # Data dataclasses
 ├── docker-compose.yml   # Database infrastructure
-├── indeed_scraper.py    # Main script wrapper
+├── kindly.py            # Main script wrapper
 ├── requirements.txt     # Python dependencies
 └── README.md            # This file
 ```
