@@ -2,67 +2,62 @@
 
 ![Recruiter Clown](./recruiter_clown.png)
 
-A comprehensive tool built to navigate an overly saturated tech job market and counter the noise of constant, unproductive outreach from "clown" agencies—specifically designed as a robust defense against the flood of ghost-job recruiting calls. This CLI application streamlines your search by scraping real listings and using a local LLM to generate highly customized, ATS-optimized resumes.
-
-This tool is designed to be highly extensible and is a powerful skill to be used in conjunction with automation frameworks like **OpenClaw**.
+A comprehensive tool built to navigate an overly saturated tech job market. This CLI application streamlines your search by scraping real listings, persisting them to a vector database, and using a local LLM to generate highly customized, ATS-optimized resumes.
 
 ## Features
 
-- **Automated Scraping**: Fetches job listings including title, company, location, and full job descriptions.
-- **AI Resume Generation**: Uses a local Ollama instance (e.g., Llama 3.2) to rewrite your base resume for specific job postings.
-- **Smart Organization**: All generated data, scrapes, and resumes are neatly organized in a consolidated `output/` folder.
-- **Robustness**: Handles pagination, redirects, retries with exponential backoff, and randomized headers to navigate anti-bot measures.
+- **Automated Scraping**: Fetches job listings including title, company, location, salary, job type, and full job descriptions.
+- **Central Manifest**: Consolidates multiple searches into a single `manifest.xlsx`, with each query getting its own tab.
+- **Semantic Search**: Persists listings to a PostgreSQL database with `pgvector` for semantic similarity search using local Ollama embeddings.
+- **AI Resume Generation**: Uses a local Ollama instance to rewrite your base resume for specific job postings.
+- **Smart Organization**: All generated data and resumes are organized in the `output/` folder and the central manifest.
 
 ## Prerequisites
 
 1. **Python 3.x**: Ensure you have Python installed.
-2. **Ollama**: Required for resume generation.
+2. **Docker Desktop**: Required for the PostgreSQL/pgvector database.
+3. **Ollama**: Required for resume generation and embeddings.
    - Install from [ollama.com](https://ollama.com).
-   - Pull the default model: `ollama pull llama3.2`
+   - Pull necessary models:
+     - `ollama pull llama3.2` (Resume generation)
+     - `ollama pull nomic-embed-text` (Semantic search)
 
 ## Installation
 
-1. **Clone the repository**:
+1. **Clone and Setup**:
 
    ```bash
    git clone <repository-url>
    cd scrapper-indeed
-   ```
-
-2. **Set up virtual environment**:
-
-   ```bash
    python3 -m venv venv
    source venv/bin/activate
+   pip install -r requirements.txt
    ```
 
-3. **Install dependencies**:
+2. **Start Database**:
    ```bash
-   pip install -r requirements.txt
+   docker-compose up -d
    ```
 
 ## Usage
 
-The tool is accessible via two main commands: `scrape` and `generate`.
-
 ### 1. Scraping Jobs
 
-Fetch jobs and save them for later processing. Results are stored in `output/` by default.
+Fetches jobs and saves them to the PostgreSQL database and the central `manifest.xlsx`.
 
 ```bash
-python3 indeed_scraper.py scrape --query "Python Developer" --city "Atlanta, GA" --days 7 --pages 3
+python3 indeed_scraper.py scrape --query "Python Developer" --city "Remote" --pages 2
 ```
 
-**Options:**
+### 2. Semantic Similarity Search
 
-- `--query`: Job search keywords (Required).
-- `--city`: Target location (Required).
-- `--days`: Limit to jobs posted within the last N days (Default: 7).
-- `--pages`: Number of pages to scrape (Default: 5).
-- `--output`: Custom filename (e.g., `my_jobs.csv`). Saved in `output/` by default.
-- `--format`: `csv` or `json` (Default: `csv`).
+Find jobs that match the _meaning_ of your query, not just keywords. Uses local vector embeddings.
 
-### 2. Generating Resumes
+```bash
+python3 indeed_scraper.py similar --query "Looking for a backend role with Python and FastAPI" --top 5
+```
+
+### 3. Generating Resumes
 
 Generate customized resumes for each job in a scraped file.
 
@@ -70,32 +65,25 @@ Generate customized resumes for each job in a scraped file.
 python3 indeed_scraper.py generate --input output/jobs.csv --resume my_resume.txt
 ```
 
-**Options:**
+## Infrastructure
 
-- `--input`: Path to the scraped jobs file (Required).
-- `--resume`: Path to your base resume in text format (Required).
-- `--model`: The Ollama model to use (Default: `llama3.2`).
-- `--output-dir`: Custom directory for generated resumes (Default: `output`).
-
-## Output Structure
-
-All generated files are consolidated into the `output/` directory (ignored by git):
-
-- `output/*.csv`: Scraped job data.
-- `output/*.md`: AI-generated, job-specific resumes.
+- **Database**: PostgreSQL with `pgvector` runs on **localhost:5433**.
+- **Credentials**: User: `scraper`, Password: `secret`, DB: `scraper_jobs`.
+- **Manifest**: Central search history stored in `manifest.xlsx` (Project Root) and `/tmp/manifest.xlsx` (Backup).
 
 ## Project Structure
 
 ```
 .
 ├── indeed_scraper/      # Core logic package
-│   ├── cli.py           # CLI entry point and command definitions
+│   ├── db/              # Database connection and setup
+│   ├── cli.py           # CLI entry point
 │   ├── scraper.py       # Scraper orchestration
-│   ├── parser.py        # HTML parsing and extraction
+│   ├── parser.py        # HTML parsing
 │   ├── llm.py           # AI integration (Ollama)
-│   ├── models.py        # Data models
-│   └── utils.py         # Shared helpers
-├── output/              # Consolidated generated folder (local only)
+│   ├── db_models.py     # SQLAlchemy models
+│   └── models.py        # Data dataclasses
+├── docker-compose.yml   # Database infrastructure
 ├── indeed_scraper.py    # Main script wrapper
 ├── requirements.txt     # Python dependencies
 └── README.md            # This file
@@ -103,4 +91,4 @@ All generated files are consolidated into the `output/` directory (ignored by gi
 
 ## Disclaimer
 
-This tool is for educational purposes. Scraping websites like Indeed should be done responsibly and in accordance with their terms of service. Over-aggressive scraping may lead to IP blocks or CAPTCHAs.
+This tool is for educational purposes. Scraping websites like Indeed should be done responsibly and in accordance with their terms of service.
