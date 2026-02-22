@@ -67,6 +67,7 @@ class IndeedScraper:
                 
                 for job in page_jobs:
                     if job.link not in seen_links:
+                        job.query = query # Set the query field
                         seen_links.add(job.link)
                         all_jobs.append(job)
                 
