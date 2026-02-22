@@ -151,15 +151,11 @@ def get_query_embedding(query_text: str) -> list:
     return get_ollama_embedding(query_text)
 
 @cli.command()
-@click.option('--query', required=True, help='Natural‑language query to find similar jobs')
+@click.option('--query', required=True, help='Natural-language query to find similar jobs')
 @click.option('--top', default=5, help='Number of most similar jobs to return')
 def similar(query, top):
-    """Find the *top* jobs whose stored embeddings are most similar to the query.
-    Uses PostgreSQL's pgvector `<=>` (cosine distance) operator.
-    """
-    # Compute the query embedding
+    """Find the *top* jobs whose stored embeddings are most similar to the query."""
     q_vec = get_query_embedding(query)
-    # Run the similarity query
     import json
     with SessionLocal() as db:
         stmt = text(
@@ -172,12 +168,65 @@ def similar(query, top):
             """
         )
         rows = db.execute(stmt, {"qvec": json.dumps(q_vec), "limit": top}).fetchall()
+    
     if not rows:
         click.echo("No similar jobs found.")
         return
+    
     click.echo(f"Top {top} similar jobs for query: '{query}'")
     for row in rows:
-        click.echo(f"- [{row.distance:.4f}] {row.title} at {row.company} -> {row.link}")
+        click.echo(f"- [{row.distance:.4f}] {row.id}: {row.title} at {row.company} -> {row.link}")
+
+@cli.command()
+@click.option('--limit', default=10, help='Number of jobs to list')
+@click.option('--company', help='Filter by company name (partial match)')
+@click.option('--query-search', help='Filter by the original search query')
+def list_jobs(limit, company, query_search):
+    """Lists jobs stored in the database."""
+    with SessionLocal() as db:
+        query = db.query(DBJob)
+        if company:
+            query = query.filter(DBJob.company.ilike(f"%{company}%"))
+        if query_search:
+            query = query.filter(DBJob.query.ilike(f"%{query_search}%"))
+        
+        jobs = query.order_by(DBJob.id.desc()).limit(limit).all()
+        
+        if not jobs:
+            click.echo("No jobs found matching criteria.")
+            return
+        
+        click.echo(f"{'ID':<5} | {'Title':<40} | {'Company':<25}")
+        click.echo("-" * 75)
+        for job in jobs:
+            title = (job.title[:37] + '...') if len(job.title) > 40 else job.title
+            company_name = (job.company[:22] + '...') if job.company and len(job.company) > 25 else (job.company or "N/A")
+            click.echo(f"{job.id:<5} | {title:<40} | {company_name:<25}")
+
+@cli.command()
+@click.argument('job_id', type=int)
+def describe(job_id):
+    """Shows full details for a specific job ID."""
+    with SessionLocal() as db:
+        job = db.query(DBJob).filter(DBJob.id == job_id).first()
+        if not job:
+            click.echo(f"Job {job_id} not found.")
+            return
+        
+        click.echo(f"\n=== Job {job.id}: {job.title} ===")
+        click.echo(f"Company:  {job.company}")
+        click.echo(f"Location: {job.location}")
+        click.echo(f"Salary:   {job.salary if hasattr(job, 'salary') else 'N/A'}")
+        click.echo(f"Posted:   {job.posted_date}")
+        click.echo(f"Link:     {job.link}")
+        click.echo(f"Query:    {job.query}")
+        click.echo("\n--- Description ---")
+        desc = job.full_description or "No description available."
+        click.echo(desc[:2000] + ("..." if len(desc) > 2000 else ""))
+        if job.generated_resume:
+            click.echo("\n[AI Resume Generated: YES (use fetch-resume to see it)]")
+        else:
+            click.echo("\n[AI Resume Generated: NO]")
 
 @cli.command()
 @click.option('--job-id', required=True, type=int, help='Database ID of the job')

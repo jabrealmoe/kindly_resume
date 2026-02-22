@@ -73,10 +73,35 @@ Fetch a previously generated resume from the database by its job ID.
 python3 indeed_scraper.py fetch-resume --job-id 42
 ```
 
-**Options:**
+### 5. Direct Database Querying (CLI)
 
-- `--job-id`: The database ID of the job (Required).
-- `--save`: Save the resume to a markdown file in `output/` instead of printing to terminal.
+Query the job database directly from the CLI without writing SQL.
+
+```bash
+# List the last 10 jobs found
+python3 indeed_scraper.py list-jobs --limit 10
+
+# List jobs by company
+python3 indeed_scraper.py list-jobs --company "Google"
+
+# Show full details (description, link, etc.) for a specific job ID
+python3 indeed_scraper.py describe 42
+```
+
+## Database Access
+
+If you prefer using standard SQL tools, you can connect to the PostgreSQL instance running in Docker:
+
+```bash
+# Connect via psql
+docker exec -it indeed_pg psql -U scraper -d scraper_jobs
+```
+
+- **Host**: `localhost`
+- **Port**: `5433`
+- **User**: `scraper`
+- **Password**: `secret`
+- **Database**: `scraper_jobs`
 
 ## Infrastructure
 

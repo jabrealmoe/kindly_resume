@@ -146,8 +146,12 @@ class IndeedScraper:
                     company_url=job.company_url,
                     is_workday=(job.is_workday == "Yes"),
                 )
-                session.merge(db_job)  # upsert based on unique link
-            session.commit()
+                try:
+                    session.merge(db_job)
+                    session.commit()
+                except Exception as e:
+                    logger.warning(f"Failed to persist job {job.title} to database: {e}")
+                    session.rollback()
         finally:
             session.close()
         return all_jobs
