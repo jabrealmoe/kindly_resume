@@ -117,7 +117,20 @@ def generate(input, resume, model, output_dir, sheet):
             
             if description and isinstance(description, str) and "Description not found" not in description:
                 logger.info(f"Processing resume for job {i+1}/{len(jobs)}: {title} at {company}")
-                generate_resume(description, resume_text, str(company), model=model, output_dir=output_dir)
+                success, content = generate_resume(description, resume_text, str(company), model=model, output_dir=output_dir)
+                
+                if success and content:
+                    # Persistence to DB
+                    link = job.get('link')
+                    if link:
+                        with SessionLocal() as db:
+                            db_job = db.query(DBJob).filter(DBJob.link == link).first()
+                            if db_job:
+                                db_job.generated_resume = content
+                                db.commit()
+                                logger.info(f"Saved resume to database for job: {title}")
+                            else:
+                                logger.debug(f"Job not found in database by link, skipping DB persistence: {link}")
             else:
                 logger.warning(f"Skipping resume generation for job {i+1}: No description available.")
 
@@ -165,6 +178,33 @@ def similar(query, top):
     click.echo(f"Top {top} similar jobs for query: '{query}'")
     for row in rows:
         click.echo(f"- [{row.distance:.4f}] {row.title} at {row.company} -> {row.link}")
+
+@cli.command()
+@click.option('--job-id', required=True, type=int, help='Database ID of the job')
+@click.option('--save', is_flag=True, help='Save to file instead of printing')
+def fetch_resume(job_id, save):
+    """Retrieves a previously generated resume from the database."""
+    with SessionLocal() as db:
+        job = db.query(DBJob).filter(DBJob.id == job_id).first()
+        if not job:
+            click.echo(f"Job with ID {job_id} not found.")
+            return
+        
+        if not job.generated_resume:
+            click.echo(f"No generated resume found for job: {job.title}")
+            return
+        
+        if save:
+            filename = f"resume_{job_id}_{re.sub(r'[^a-zA-Z0-9]+', '_', str(job.company)).strip('_')}.md"
+            output_path = os.path.join('output', filename)
+            os.makedirs('output', exist_ok=True)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(job.generated_resume)
+            click.echo(f"Resume saved to {output_path}")
+        else:
+            click.echo(f"--- Resume for {job.title} at {job.company} ---")
+            click.echo(job.generated_resume)
+            click.echo("--- End of Resume ---")
 
 if __name__ == '__main__':
     cli()

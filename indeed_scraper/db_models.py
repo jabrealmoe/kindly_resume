@@ -17,6 +17,7 @@ class Job(Base):
     company_url = Column(String, nullable=True)
     is_workday = Column(Boolean, default=False)
     applied_at = Column(DateTime, nullable=True)
+    generated_resume = Column(Text, nullable=True)
 
     def __repr__(self):
         return f"<Job id={self.id} title={self.title!r} company={self.company!r}>"

@@ -59,11 +59,24 @@ python3 indeed_scraper.py similar --query "Looking for a backend role with Pytho
 
 ### 3. Generating Resumes
 
-Generate customized resumes for each job in a scraped file.
+Generate customized resumes for each job in a scraped file. These are automatically saved to the database.
 
 ```bash
 python3 indeed_scraper.py generate --input output/jobs.csv --resume my_resume.txt
 ```
+
+### 4. Retrieving Stored Resumes
+
+Fetch a previously generated resume from the database by its job ID.
+
+```bash
+python3 indeed_scraper.py fetch-resume --job-id 42
+```
+
+**Options:**
+
+- `--job-id`: The database ID of the job (Required).
+- `--save`: Save the resume to a markdown file in `output/` instead of printing to terminal.
 
 ## Infrastructure
 

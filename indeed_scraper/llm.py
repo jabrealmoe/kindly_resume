@@ -189,13 +189,13 @@ Guidelines:
         with open(filename, "w", encoding="utf-8") as f:
             f.write(resume_content)
         logger.info(f"Resume saved to {filename}")
-        return True
+        return True, resume_content
     except requests.exceptions.ConnectionError:
         logger.error(f"Failed to connect to Ollama at {url}. Is it running?")
-        return False
+        return False, None
     except Exception as e:
         logger.error(f"Failed to generate resume for {company_name}: {e}")
-        return False
+        return False, None
 
 
 def get_ollama_embedding(text: str, model: str = None) -> list[float]:
