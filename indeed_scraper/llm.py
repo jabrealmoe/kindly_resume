@@ -50,7 +50,7 @@ Guidelines:
         TRANSFORMATION REQUIREMENTS:
 
         1. COMPANY SELECTION (Be Specific):
-        - Replace ALL previous employers with ACTUAL Fortune 50 company names that match the job's industry
+        - Replace ALL previous employers with ACTUAL Fortune 500 company names that match the job's industry or Y Combinator companies
         - For tech roles: Use companies like Google, Microsoft, Amazon, Apple, Meta, Netflix, Adobe, Salesforce, Oracle, IBM
         - For finance: Use JPMorgan Chase, Bank of America, Goldman Sachs, Morgan Stanley, Citigroup, Wells Fargo
         - For healthcare: Use UnitedHealth Group, CVS Health, McKesson, AmerisourceBergen, Cigna, Anthem
