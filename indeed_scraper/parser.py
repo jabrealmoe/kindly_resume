@@ -54,18 +54,33 @@ class IndeedParser:
         location = location_elem.get_text(strip=True) if location_elem else "N/A"
 
         # Posted Date
-        # Usually inside a span with class 'date' or under 'myJobsState'
         posted_elem = card.select_one('.date') or card.select_one('span.date')
         posted = posted_elem.get_text(strip=True) if posted_elem else "N/A"
-        # Sometimes 'date' has a 'span' inside with 'visually-hidden' text, handled by get_text
+
+        # Salary
+        # Look for salary snippet
+        salary_elem = card.select_one('.salary-snippet-container') or card.select_one('.salary-snippet') or card.select_one('[data-testid="attribute_snippet_testid"]')
+        salary = salary_elem.get_text(strip=True) if salary_elem else "N/A"
+
+        # Job Type
+        # Often in metadata sections
+        job_type = "N/A"
+        metadata_items = card.select('.metadata.salarySnippet [data-testid="attribute_snippet_testid"]')
+        if not metadata_items:
+             metadata_items = card.select('.metadataContainer li')
+        
+        for item in metadata_items:
+            text = item.get_text(strip=True)
+            # Simple heuristic for job type
+            if any(t in text.lower() for t in ['full-time', 'part-time', 'contract', 'temporary', 'remote']):
+                job_type = text
+                break
 
         # Summary/Snippet
-        # Often in a div with class 'job-snippet'
         summary_elem = card.select_one('.job-snippet')
         if summary_elem:
             summary = summary_elem.get_text(strip=True)
         else:
-            # Fallback to metadataContainer (e.g. benefits, salary, attributes)
             metadata_ul = card.select_one('.metadataContainer')
             if metadata_ul:
                 items = [li.get_text(strip=True) for li in metadata_ul.find_all('li')]
@@ -74,7 +89,6 @@ class IndeedParser:
                 summary = "N/A"
 
         # Link
-        # The anchor tag is usually roughly around the title
         link_elem = card.select_one('h2.jobTitle a') or card.find('a', href=True)
         link = "N/A"
         if link_elem and link_elem.get('href'):
@@ -86,7 +100,9 @@ class IndeedParser:
             location=location,
             posted=posted,
             summary=summary,
-            link=link
+            link=link,
+            salary=salary,
+            job_type=job_type
         )
 
     def extract_full_description(self, html_content: str) -> str:

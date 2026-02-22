@@ -9,6 +9,9 @@ class Job:
     posted: str
     summary: str
     link: str
+    salary: str = "N/A"
+    job_type: str = "N/A"
+    query: str = "N/A"
     full_description: Optional[str] = None
     company_url: Optional[str] = None
     is_workday: str = "No"
@@ -21,6 +24,9 @@ class Job:
             "posted": self.posted,
             "summary": self.summary,
             "link": self.link,
+            "salary": self.salary,
+            "job_type": self.job_type,
+            "query": self.query,
             "full_description": self.full_description,
             "company_url": self.company_url,
             "is_workday": self.is_workday
