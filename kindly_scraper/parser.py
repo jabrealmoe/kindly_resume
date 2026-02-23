@@ -122,7 +122,7 @@ class KindlyParser:
         if desc_elem:
             return desc_elem.get_text(separator='\n', strip=True)
             
-        return "Description not found or parsing failed."
+        return "Error: Description not found or parsing failed."
 
     def extract_company_url(self, html_content: str) -> Optional[str]:
         """Extracts the 'Apply on Company Site' URL if available."""

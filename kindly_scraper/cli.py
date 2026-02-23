@@ -155,7 +155,10 @@ def get_query_embedding(query_text: str) -> list:
 @click.option('--top', default=5, help='Number of most similar jobs to return')
 def similar(query, top):
     """Find the *top* jobs whose stored embeddings are most similar to the query."""
-    q_vec = get_query_embedding(query)
+    # Enrich the query with the same context prefixes used during storage
+    # This helps match the "Company: X\nTitle: Y" format in the database
+    search_query = f"Company: {query}\nTitle: {query}\nDescription: {query}"
+    q_vec = get_query_embedding(search_query)
     import json
     with SessionLocal() as db:
         stmt = text(

@@ -102,6 +102,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+local_venv/
+scraper_venv/
 
 # Spyder project settings
 .spyderproject
@@ -143,4 +145,3 @@ your_resume.txt
 env_packages/
 *.db
 *.sqlite
-.env

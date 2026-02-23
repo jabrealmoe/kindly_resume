@@ -12,7 +12,7 @@ A comprehensive tool built to navigate an overly saturated tech job market. This
 - **Semantic Resume Alignment**: Uses a local Ollama instance to translate your base resume's accomplishments into the specific conceptual language of a job posting.
 - **Smart Organization**: All generated data and resumes are organized in the `output/` folder and the central manifest.
 
-## Responsible AI & Ethical Framing
+## Responsible AI & Ethical Considerations
 
 This tool is designed for **Semantic Alignment**, not fabrication.
 

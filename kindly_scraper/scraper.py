@@ -126,11 +126,20 @@ class KindlyScraper:
         session = SessionLocal()
         try:
             for job in all_jobs:
-                # Generate embedding if we have a full description
+                # Generate embedding if we have a valid full description
                 vec = None
-                if job.full_description and not job.full_description.startswith("Error"):
+                # Check for various failure markers
+                is_valid_desc = (
+                    job.full_description 
+                    and not job.full_description.startswith("Error")
+                    and "Description not found" not in job.full_description
+                )
+                
+                if is_valid_desc:
                     try:
-                        vec = get_ollama_embedding(job.full_description)
+                        # Combine context for better similarity search
+                        embedding_text = f"Company: {job.company}\nTitle: {job.title}\nDescription: {job.full_description}"
+                        vec = get_ollama_embedding(embedding_text)
                     except Exception as e:
                         logger.warning(f"Failed to generate embedding for {job.title}: {e}")
 
